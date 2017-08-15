@@ -1,0 +1,9 @@
+Library/
+Temp/
+Assets/StreamingAssets/
+*.csproj
+*.sln
+.vs/Unity Project - 360 video/v15/.suo
+Assets/AVProVideo/
+Assets/GoogleVR/
+Assets/Plugins/
