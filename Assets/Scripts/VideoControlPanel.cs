@@ -61,6 +61,13 @@ public class VideoControlPanel : MonoBehaviour
             if (current_time >= 35000)
             {
                 goToCastleUI.SetActive(false);
+                if (_mediaPlayer.Control.IsPlaying())
+                {
+                    if (!insideCastle.GetComponent<GvrAudioSource>().isPlaying)
+                        insideCastle.GetComponent<GvrAudioSource>().Play();
+                    if (!crowdSound.GetComponent<GvrAudioSource>().isPlaying)
+                        crowdSound.GetComponent<GvrAudioSource>().Play();
+                }
             }
 
             // Show Credit screen at end of video
@@ -77,8 +84,10 @@ public class VideoControlPanel : MonoBehaviour
     public void PlayButton_OnClicked()
     {
         if (!_mediaPlayer.Control.IsPlaying())
+        {
             _mediaPlayer.Control.Play();
-        crowdSound.GetComponent<GvrAudioSource>().Play();
+            crowdSound.GetComponent<GvrAudioSource>().Play();
+        }
     }
 
     // Pause button
@@ -149,7 +158,6 @@ public class VideoControlPanel : MonoBehaviour
         _mediaPlayer.Control.Seek(timeslot_1);
 
         _mediaPlayer.Control.Play();
-        insideCastle.GetComponent<GvrAudioSource>().Play();
     }
 
     private void onFrameReady()
