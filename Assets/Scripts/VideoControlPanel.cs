@@ -15,10 +15,12 @@ public class VideoControlPanel : MonoBehaviour
     public GameObject introUI, controlsUI, creditsUI, goToCastleUI, loadingUI;
     public GameObject exitCreditsButton;
     public GameObject crowdSound, insideCastle;
-    public GameObject log;
     public GameObject videoSphere;
+    public Button playButton, demoRestartButton;
+    public Text playButtonText;
 
     float current_time;
+    float sceneSwitchTime = 25800;
 
     private bool isReadyToPlay;
     private bool isFrameReady;
@@ -29,6 +31,7 @@ public class VideoControlPanel : MonoBehaviour
         isFrameReady = isReadyToPlay = false;
         controlsUI.SetActive(false);
         creditsUI.SetActive(false);
+        demoRestartButton.gameObject.SetActive(false);
         goToCastleUI.SetActive(false);
         loadingUI.SetActive(false);
         introUI.SetActive(true);
@@ -48,6 +51,14 @@ public class VideoControlPanel : MonoBehaviour
             case MediaPlayerEvent.EventType.FirstFrameReady:
                 onFrameReady();
                 break;
+
+            case MediaPlayerEvent.EventType.FinishedPlaying:
+                onFinished();
+                break;
+
+            case MediaPlayerEvent.EventType.Started:
+                startPlayEvent();
+                break;
         }
     }
 
@@ -58,7 +69,7 @@ public class VideoControlPanel : MonoBehaviour
         {
             current_time = this._mediaPlayer.Control.GetCurrentTimeMs();
             // Hide "go to castle" button when already inside castle
-            if (current_time >= 35000)
+            if (current_time >= sceneSwitchTime)
             {
                 goToCastleUI.SetActive(false);
                 if (_mediaPlayer.Control.IsPlaying())
@@ -69,15 +80,17 @@ public class VideoControlPanel : MonoBehaviour
                         crowdSound.GetComponent<GvrAudioSource>().Play();
                 }
             }
-
-            // Show Credit screen at end of video
-            if (current_time >= 85000)
-            {
-                creditsUI.SetActive(true);
-                controlsUI.SetActive(false);
-                exitCreditsButton.SetActive(false);
-            }
         }
+    }
+
+    private void onFinished()
+    {
+        creditsUI.SetActive(true);
+        controlsUI.SetActive(false);
+        exitCreditsButton.SetActive(false);
+        demoRestartButton.gameObject.SetActive(true);
+        insideCastle.GetComponent<GvrAudioSource>().Stop();
+        crowdSound.GetComponent<GvrAudioSource>().Stop();
     }
 
     // Play button
@@ -86,17 +99,36 @@ public class VideoControlPanel : MonoBehaviour
         if (!_mediaPlayer.Control.IsPlaying())
         {
             _mediaPlayer.Control.Play();
-            crowdSound.GetComponent<GvrAudioSource>().Play();
+            startPlayEvent();
         }
+        else
+        {
+            _mediaPlayer.Control.Pause();
+            crowdSound.GetComponent<GvrAudioSource>().Pause();
+            insideCastle.GetComponent<GvrAudioSource>().Pause();
+            playButtonText.text = "Play";
+        }
+    }
+
+    private void startPlayEvent()
+    {
+        crowdSound.GetComponent<GvrAudioSource>().Play();
+        if (current_time >= sceneSwitchTime)
+        {
+            insideCastle.GetComponent<GvrAudioSource>().Play();
+        }
+        playButtonText.text = "Pause";
     }
 
     // Pause button
     public void PauseButton_OnClicked()
     {
         if (_mediaPlayer.Control.IsPlaying())
+        {
             _mediaPlayer.Control.Pause();
-        crowdSound.GetComponent<GvrAudioSource>().Pause();
-        insideCastle.GetComponent<GvrAudioSource>().Pause();
+            crowdSound.GetComponent<GvrAudioSource>().Pause();
+            insideCastle.GetComponent<GvrAudioSource>().Pause();
+        }
     }
 
     // Restart button
@@ -107,6 +139,11 @@ public class VideoControlPanel : MonoBehaviour
         goToCastleUI.SetActive(true);
         crowdSound.GetComponent<GvrAudioSource>().Stop();
         insideCastle.GetComponent<GvrAudioSource>().Stop();
+        playButtonText.text = "Play";
+        creditsUI.SetActive(false);
+        controlsUI.SetActive(true);
+        exitCreditsButton.SetActive(true);
+        demoRestartButton.gameObject.SetActive(false);
     }
 
     // "Let's Go" button
@@ -127,6 +164,8 @@ public class VideoControlPanel : MonoBehaviour
 
         controlsUI.SetActive(true);
         goToCastleUI.SetActive(true);
+
+        _mediaPlayer.Control.Play();
     }
 
     // View credits button
@@ -146,16 +185,11 @@ public class VideoControlPanel : MonoBehaviour
     // Go to castle button
     public void GoToCastleButton_OnClicked()
     {
-        crowdSound.GetComponent<GvrAudioSource>().Stop();
-
-        // Variable for video time showing desired scene (castle close-up view) 
-        float timeslot_1 = 35000;
-
         // Hide/show buttons after button click
         goToCastleUI.SetActive(false);
 
         // Fast-forward movie to specific time
-        _mediaPlayer.Control.Seek(timeslot_1);
+        _mediaPlayer.Control.Seek(sceneSwitchTime);
 
         _mediaPlayer.Control.Play();
     }
